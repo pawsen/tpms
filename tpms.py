@@ -1,7 +1,9 @@
 import argparse
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date, time
 from collections import defaultdict
+import glob
+import gzip
 
 from plots import plot_home_raster
 
@@ -13,26 +15,58 @@ DEFAULT_IDS = [
 ]
 
 
-def parse_lines(path: str, allowed_ids: set[str]) -> list[datetime]:
+def parse_lines(
+    logfile: str,
+    allowed_ids: set[str],
+    start: date | None = None,
+    end: date | None = None,
+) -> list[datetime]:
     """
-    Read JSONL, keep only records whose 'id' is in allowed_ids.
-    Returns a sorted list of datetimes for matching packets.
+    Read JSONL/JSONL.GZ from:
+      - a single file path, OR
+      - a glob pattern (e.g. /var/log/rtl_433/tpms/tpms_current.jsonl*)
+    Keep only records whose 'id' is in allowed_ids.
+    Optionally filter by date range [start, end] inclusive, based on obj["time"].
+    Returns sorted list of datetimes for matching packets.
     """
+    # Inclusive day boundaries
+    start_dt = datetime.combine(start, time.min) if start else None
+    end_dt = datetime.combine(end, time.max) if end else None
+
+    paths = glob.glob(logfile)
+    if not paths:
+        raise FileNotFoundError(f"No files match --logfile pattern: {logfile}")
+    paths.sort()
+
     times: list[datetime] = []
-    with open(path, "r") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            obj = json.loads(line)
 
-            sid = obj.get("id")
-            if sid is None:
-                continue
-            if str(sid) not in allowed_ids:
-                continue
+    for p in paths:
+        opener = gzip.open if p.endswith(".gz") else open
+        with opener(p, "rt", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except Exception:
+                    continue  # drop non-JSON lines
 
-            times.append(datetime.fromisoformat(obj["time"]))
+                sid = obj.get("id")
+                if sid is None or str(sid) not in allowed_ids:
+                    continue
+
+                try:
+                    t = datetime.fromisoformat(obj["time"])
+                except Exception:
+                    continue
+
+                if start_dt and t < start_dt:
+                    continue
+                if end_dt and t > end_dt:
+                    continue
+
+                times.append(t)
 
     times.sort()
     return times
@@ -94,9 +128,57 @@ def detect_home_intervals(
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("path", nargs="?", default="cleaned.jsonl", help="Input JSONL file")
+    ap = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description=(
+            "TPMS presence plotting from rtl_433 JSONL logs.\n"
+            "\n"
+            "Examples:\n"
+            "  # Single file (positional):\n"
+            "  python tpms.py cleaned.jsonl --id d9bd4f7c --id d9b796c4 --window-minutes 20 --show\n"
+            "\n"
+            "  # Same, using --logfile:\n"
+            "  python tpms.py --logfile cleaned.jsonl --id 251 --window-minutes 40 --show\n"
+            "\n"
+            "  # Read rotated gz logs for a date range (inclusive):\n"
+            "  python tpms.py '/var/log/rtl_433/tpms/tpms_current.jsonl-2026-01-*.gz' \\\n"
+            "    --start 2026-01-21 --end 2026-01-26 \\\n"
+            "    --id 251 --window-minutes 40 --show\n"
+            "\n"
+            "Notes:\n"
+            "  - Quote globs so the shell does not expand them.\n"
+            "  - --start/--end filter on the JSON field 'time' (not filename).\n"
+        ),
+    )
 
+    # Optional positional logfile (so: python tpms.py cleaned.jsonl ...)
+    ap.add_argument(
+        "logfile_pos",
+        nargs="?",
+        default=None,
+        help="Input file or glob (same as --logfile)",
+    )
+
+    # Optional flag form (so: python tpms.py --logfile cleaned.jsonl ...)
+    ap.add_argument(
+        "--logfile",
+        default=None,
+        help="Input file or glob. Examples: ./cleaned.jsonl, ./cleaned.jsonl.gz, "
+        "/var/log/rtl_433/tpms/tpms_current.jsonl*",
+    )
+
+    ap.add_argument(
+        "--start",
+        type=date.fromisoformat,
+        default=None,
+        help="Start date inclusive, e.g. 2026-01-21",
+    )
+    ap.add_argument(
+        "--end",
+        type=date.fromisoformat,
+        default=None,
+        help="End date inclusive, e.g. 2026-01-24",
+    )
     ap.add_argument(
         "--id",
         dest="ids",
@@ -124,11 +206,15 @@ def main():
     )
 
     args = ap.parse_args()
+    logfile = args.logfile_pos or args.logfile or "cleaned.jsonl"
 
     allowed_ids = set(args.ids) if args.ids else set(DEFAULT_IDS)
     print(f"Using ids={sorted(allowed_ids)}")
 
-    times = parse_lines(args.path, allowed_ids=allowed_ids)
+    times = parse_lines(
+        logfile, allowed_ids=allowed_ids, start=args.start, end=args.end
+    )
+
     print(f"Packets after id-filter: {len(times)}")
 
     home_intervals = detect_home_intervals(

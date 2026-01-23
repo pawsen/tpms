@@ -1,3 +1,4 @@
+Install and force logrotate to test
 #+begin_src sh
 sudo ./install.sh
 sudo logrotate -f /etc/logrotate.d/rtl433-tpms
@@ -9,4 +10,22 @@ ls -1 /var/log/rtl_433/tpms | tail -n 10
 
 #+begin_src sh
 grep -E '^\s*\{.*\}\s*$' all.jsonl > cleaned.jsonl
+#+end_src
+
+
+Combine all gzipped logfiles
+#+begin_src sh
+zcat -f /var/log/rtl-433/tpms/tpms_current.jsonl* > combined.jsonl
+#+end_src
+
+Or just some days
+#+begin_src sh
+zcat -f /var/log/rtl_433/tpms/tpms_current.jsonl-2026-01-{21..26}_*.gz > combined_2026-01-21_26.jsonl
+#+end_src
+
+
+#+begin_src sh
+python tpms.py '/var/log/rtl_433/tpms/tpms_current.jsonl-2026-01-*.gz' \
+  --start 2026-01-21 --end 2026-01-26 \
+  --id 251 --window-minutes 40 --show
 #+end_src
