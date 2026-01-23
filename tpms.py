@@ -1,11 +1,11 @@
 import argparse
 import json
-from datetime import datetime, timedelta, date, time
+from datetime import datetime, timedelta, date, time as dtime
 from collections import defaultdict
 import glob
 import gzip
 
-from plots import plot_home_raster
+from plots import plot_home_raster, plot_temp_pressure
 
 # Default IDs if none provided on CLI (use strings to handle int IDs too)
 DEFAULT_IDS = [
@@ -20,26 +20,24 @@ def parse_lines(
     allowed_ids: set[str],
     start: date | None = None,
     end: date | None = None,
-) -> list[datetime]:
+):
     """
-    Read JSONL/JSONL.GZ from:
-      - a single file path, OR
-      - a glob pattern (e.g. /var/log/rtl_433/tpms/tpms_current.jsonl*)
-    Keep only records whose 'id' is in allowed_ids.
-    Optionally filter by date range [start, end] inclusive, based on obj["time"].
-    Returns sorted list of datetimes for matching packets.
+    Read JSONL/JSONL.GZ from a single file path OR a glob.
+    Keeps only records whose 'id' is in allowed_ids.
+    Filters by [start, end] inclusive on obj["time"] if provided.
+
+    Returns sorted rows:
+      (t: datetime, id_str: str, temp_c: float|None, pressure_psi: float|None)
     """
-    # Inclusive day boundaries
-    start_dt = datetime.combine(start, time.min) if start else None
-    end_dt = datetime.combine(end, time.max) if end else None
+    start_dt = datetime.combine(start, dtime.min) if start else None
+    end_dt = datetime.combine(end, dtime.max) if end else None
 
     paths = glob.glob(logfile)
     if not paths:
-        raise FileNotFoundError(f"No files match --logfile pattern: {logfile}")
+        raise FileNotFoundError(f"No files match: {logfile}")
     paths.sort()
 
-    times: list[datetime] = []
-
+    rows = []
     for p in paths:
         opener = gzip.open if p.endswith(".gz") else open
         with opener(p, "rt", encoding="utf-8", errors="replace") as f:
@@ -53,7 +51,10 @@ def parse_lines(
                     continue  # drop non-JSON lines
 
                 sid = obj.get("id")
-                if sid is None or str(sid) not in allowed_ids:
+                if sid is None:
+                    continue
+                sid_s = str(sid)
+                if sid_s not in allowed_ids:
                     continue
 
                 try:
@@ -66,10 +67,16 @@ def parse_lines(
                 if end_dt and t > end_dt:
                     continue
 
-                times.append(t)
+                temp_c = obj.get("temperature_C")
+                temp_c = float(temp_c) if temp_c is not None else None
 
-    times.sort()
-    return times
+                pressure = obj.get("pressure_PSI")
+                pressure = float(pressure) if pressure is not None else None
+
+                rows.append((t, sid_s, temp_c, pressure))
+
+    rows.sort(key=lambda x: x[0])
+    return rows
 
 
 def detect_home_intervals(
@@ -211,10 +218,8 @@ def main():
     allowed_ids = set(args.ids) if args.ids else set(DEFAULT_IDS)
     print(f"Using ids={sorted(allowed_ids)}")
 
-    times = parse_lines(
-        logfile, allowed_ids=allowed_ids, start=args.start, end=args.end
-    )
-
+    rows = parse_lines(logfile, allowed_ids=allowed_ids, start=args.start, end=args.end)
+    times = [t for (t, _, _, _) in rows]
     print(f"Packets after id-filter: {len(times)}")
 
     home_intervals = detect_home_intervals(
@@ -232,11 +237,16 @@ def main():
     for a, b in home_intervals[:10]:
         print(a, "->", b, (b - a))
 
-    res = plot_home_raster(
+    res1 = plot_home_raster(
         home_intervals, bin_minutes=args.bin_minutes, out=args.out, show=args.show
     )
     if not args.show:
-        print("Wrote", res)
+        print("Wrote", res1)
+
+    tpath, ppath = plot_temp_pressure(rows, out_prefix="tpms", show=args.show)
+    if not args.show:
+        print("Wrote", tpath)
+        print("Wrote", ppath)
 
 
 if __name__ == "__main__":
