@@ -1,0 +1,19 @@
+[Unit]
+Description=rtl_433 TPMS logger (JSONL)
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+Environment=LOG_DIR=/var/log/rtl_433/tpms
+Environment=LOG_FILE=/var/log/rtl_433/tpms/tpms_current.jsonl
+
+# -M time:iso:utc gives stable timestamps independent of local TZ.
+ExecStart=/bin/bash -lc 'mkdir -p "$LOG_DIR" && exec /usr/bin/rtl_433 -f 433.92M -M protocol -M level -F json -M time:iso >> "$LOG_FILE"'
+
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

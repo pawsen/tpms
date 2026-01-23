@@ -1,0 +1,12 @@
+#+begin_src sh
+sudo ./install.sh
+sudo logrotate -f /etc/logrotate.d/rtl433-tpms
+sleep 2
+sudo logrotate -f /etc/logrotate.d/rtl433-tpms
+ls -1 /var/log/rtl_433/tpms | tail -n 10
+#+end_src
+
+
+#+begin_src sh
+grep -E '^\s*\{.*\}\s*$' all.jsonl > cleaned.jsonl
+#+end_src

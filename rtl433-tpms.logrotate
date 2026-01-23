@@ -1,0 +1,14 @@
+/var/log/rtl_433/tpms/tpms_current.jsonl {
+  daily
+  missingok
+  notifempty
+
+  rotate -1            # keep forever
+  compress
+  delaycompress
+
+  dateext
+  dateformat -%Y-%m-%d_%H%M%S
+
+  copytruncate
+}
