@@ -1,148 +1,96 @@
+# plots.py
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timedelta
-import numpy as np
+import re
+from datetime import datetime, timedelta, time as dtime
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 
-def plot_temp_pressure(rows, out_prefix: str = "tpms", show: bool = False):
-    """
-    rows: iterable of (datetime, id_str, temp_C|None, pressure_PSI|None)
+# Minimal label map with sane units. Anything not listed falls back to the field name.
+YLABEL = {
+    "temp_c": "Temperature (°C)",
+    "pressure_psi": "Pressure (PSI)",
+    "humidity": "Humidity (%)",
+}
 
-    Produces:
-      - {out_prefix}_temp.png
-      - {out_prefix}_pressure.png
 
-    Returns (temp_path, pressure_path) if not show, else (None, None).
-    """
-    by_id = defaultdict(lambda: {"t": [], "temp": [], "pres": []})
-
-    for t, sid, temp_c, pres_psi in rows:
-        d = by_id[str(sid)]
-        d["t"].append(t)
-        d["temp"].append(temp_c)
-        d["pres"].append(pres_psi)
-
-    if not by_id:
-        raise ValueError("No rows to plot")
-
-    # --- Temperature plot ---
-    fig1, ax1 = plt.subplots(figsize=(12, 6))
-    any_temp = False
-
-    for sid, d in sorted(by_id.items()):
-        if any(v is not None for v in d["temp"]):
-            tt = [d["t"][i] for i, v in enumerate(d["temp"]) if v is not None]
-            vv = [v for v in d["temp"] if v is not None]
-            ax1.plot(tt, vv, label=str(sid))
-            any_temp = True
-
-    ax1.set_xlabel("Time")
-    ax1.set_ylabel("Temperature (°C)")
-    ax1.set_title("Temperature by sensor ID")
-    if any_temp:
-        ax1.legend(loc="best")
-    fig1.autofmt_xdate()
-    plt.tight_layout()
-
-    # --- Pressure plot ---
-    fig2, ax2 = plt.subplots(figsize=(12, 6))
-    any_pres = False
-
-    for sid, d in sorted(by_id.items()):
-        if any(v is not None for v in d["pres"]):
-            tt = [d["t"][i] for i, v in enumerate(d["pres"]) if v is not None]
-            vv = [v for v in d["pres"] if v is not None]
-            ax2.plot(tt, vv, label=str(sid))
-            any_pres = True
-
-    ax2.set_xlabel("Time")
-    ax2.set_ylabel("Pressure (PSI)")
-    ax2.set_title("Pressure by sensor ID")
-    if any_pres:
-        ax2.legend(loc="best")
-    fig2.autofmt_xdate()
-    plt.tight_layout()
-
-    if show:
-        plt.show()
-        return (None, None)
-
-    temp_path = f"{out_prefix}_temp.png"
-    pres_path = f"{out_prefix}_pressure.png"
-    fig1.savefig(temp_path, dpi=200)
-    fig2.savefig(pres_path, dpi=200)
-    plt.close(fig1)
-    plt.close(fig2)
-    return (temp_path, pres_path)
+def _safe_name(s: str) -> str:
+    s = s.strip()
+    s = re.sub(r"[^A-Za-z0-9._-]+", "_", s)
+    return s or "field"
 
 
 def plot_home_raster(
-    home_intervals,
+    home_intervals: list[tuple[datetime, datetime]],
     bin_minutes: int = 5,
-    out: str = "home_raster.png",
+    out_prefix: str = "tmps",
     show: bool = False,
 ):
     """
-    home_intervals: list[(start_dt, end_dt)] with naive or timezone-consistent datetimes
-    Produces a raster: X=day, Y=time-of-day, black=home.
-    Saves to `out`.
+    Plot presence as a day (x) vs time-of-day (y) raster.
+
+    Uses separator columns to create thin white gaps between days:
+      - day columns at 0,2,4,...
+      - separator columns at 1,3,5,... (all zeros -> white)
+
+    home_intervals: list of (start_datetime, end_datetime) with end = last_seen.
     """
     if not home_intervals:
         raise ValueError("home_intervals is empty")
 
-    # Day range (inclusive)
-    start_day = min(a.date() for a, _ in home_intervals)
-    end_day = max(b.date() for _, b in home_intervals)
-
-    days = []
-    d = start_day
-    while d <= end_day:
-        days.append(d)
-        d += timedelta(days=1)
-
-    day_to_x = {d: i for i, d in enumerate(days)}
-    bins_per_day = (24 * 60) // bin_minutes
-    # Base grid: rows=time bins, cols=days
-    grid = np.zeros((bins_per_day, len(days)), dtype=np.uint8)
-
+    # Normalize/clip
+    intervals = []
     for a, b in home_intervals:
-        if b <= a:
-            continue
+        a = a.replace(second=0, microsecond=0)
+        b = b.replace(second=0, microsecond=0)
+        if b >= a:
+            intervals.append((a, b))
+    if not intervals:
+        raise ValueError("home_intervals is empty after normalization")
 
-        # Walk day by day to handle intervals spanning midnight
+    start_dt = min(a for a, _ in intervals)
+    end_dt = max(b for _, b in intervals)
+
+    first_day = start_dt.date()
+    last_day = end_dt.date()
+    days = [
+        first_day + timedelta(days=i) for i in range((last_day - first_day).days + 1)
+    ]
+    n_days = len(days)
+
+    bins_per_day = int((24 * 60) / bin_minutes)
+
+    # grid: shape (bins_per_day, n_days), 1=home (black), 0=away (white)
+    grid = np.zeros((bins_per_day, n_days), dtype=np.uint8)
+
+    def clamp(v: int, lo: int, hi: int) -> int:
+        return max(lo, min(hi, v))
+
+    for a, b in intervals:
         day = a.date()
         while day <= b.date():
-            x = day_to_x.get(day)
-            if x is None:
-                day = day + timedelta(days=1)
-                continue
-
-            day_start = datetime.combine(day, datetime.min.time())
+            day_idx = (day - first_day).days
+            day_start = datetime.combine(day, dtime.min)
             day_end = day_start + timedelta(days=1)
 
             seg_start = max(a, day_start)
             seg_end = min(b, day_end)
 
-            if seg_end > seg_start:
-                s_min = int((seg_start - day_start).total_seconds() // 60)
-                e_min = int((seg_end - day_start).total_seconds() // 60)
+            start_min = int((seg_start - day_start).total_seconds() // 60)
+            end_min = int((seg_end - day_start).total_seconds() // 60)
 
-                s_bin = s_min // bin_minutes
-                e_bin = (e_min + bin_minutes - 1) // bin_minutes  # ceil
+            start_bin = clamp(start_min // bin_minutes, 0, bins_per_day - 1)
+            end_bin = clamp(end_min // bin_minutes, 0, bins_per_day - 1)
 
-                s_bin = max(0, min(bins_per_day, s_bin))
-                e_bin = max(0, min(bins_per_day, e_bin))
-                if e_bin > s_bin:
-                    grid[s_bin:e_bin, x] = 1
-
+            grid[start_bin : end_bin + 1, day_idx] = 1
             day = day + timedelta(days=1)
 
     # ---- Add thin white separators between days ----
     # day columns go at 0,2,4,... and separator columns (all zeros/white) at 1,3,5,...
-    n_days = len(days)
-    n_cols = 2 * n_days - 1
+    n_cols = 2 * n_days - 1 if n_days > 0 else 0
     grid_sep = np.zeros((bins_per_day, n_cols), dtype=np.uint8)
     grid_sep[:, 0::2] = grid  # copy day data into even columns
 
@@ -180,11 +128,60 @@ def plot_home_raster(
     ax.set_title("Car home (black)")
 
     plt.tight_layout()
+
     if show:
         plt.show()
-    else:
-        plt.savefig(out, dpi=250)
-        plt.close(fig)
-        return out
+        return None
 
+    out = f"{out_prefix}_seen.png"
+    plt.savefig(out, dpi=250)
+    plt.close(fig)
+    return out
+
+
+def plot_series(rows, field: str, out_prefix: str = "tpms", show: bool = False):
+    """
+    Generic "field vs time" plot.
+
+    rows: iterable of (datetime, model, id_str, fields_dict)
+    Plots fields_dict[field] vs time for each sensor (model:id in legend).
+    Returns output path or None if nothing to plot (all values missing).
+    """
+    by_key = defaultdict(lambda: {"t": [], "v": []})
+
+    for t, model, sid, fields in rows:
+        key = f"{model}:{sid}" if model else sid
+        v = fields.get(field)
+        by_key[key]["t"].append(t)
+        by_key[key]["v"].append(v)
+
+    any_data = any(any(v is not None for v in d["v"]) for d in by_key.values())
+    if not any_data:
+        return None
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    for key, d in sorted(by_key.items()):
+        if any(v is not None for v in d["v"]):
+            tt = [d["t"][i] for i, v in enumerate(d["v"]) if v is not None]
+            vv = [v for v in d["v"] if v is not None]
+            ax.plot(tt, vv, label=key)
+
+    ylabel = YLABEL.get(field, field)
+
+    ax.set_xlabel("Time")
+    ax.set_ylabel(ylabel)
+    ax.set_title(f"{ylabel} by sensor")
+    ax.legend(loc="best")
+
+    fig.autofmt_xdate()
+    plt.tight_layout()
+
+    if show:
+        plt.show()
+        return None
+
+    out = f"{out_prefix}_{_safe_name(field)}.png"
+    fig.savefig(out, dpi=200)
+    plt.close(fig)
     return out
