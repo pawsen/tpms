@@ -29,3 +29,13 @@ python tpms.py '/var/log/rtl_433/tpms/tpms_current.jsonl-2026-01-*.gz' \
   --start 2026-01-21 --end 2026-01-26 \
   --id 251 --window-minutes 40 --show
 #+end_src
+
+
+Count and sort IDs,
+#+begin_src sh
+zcat -f /var/log/rtl_433/tpms/tpms_current.jsonl* \
+  | jq -Rr 'fromjson? | select(.id? != null) | [(.model // "UNKNOWN"), (.id|tostring)] | @tsv' \
+  | sort \
+  | uniq -c \
+  | sort -nr
+#+end_src
