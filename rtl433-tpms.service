@@ -1,5 +1,5 @@
 [Unit]
-Description=rtl_433 TPMS logger (JSONL)
+Description=rtl_433 TPMS logger (JSONL) + Prometheus exporter
 After=network.target
 
 [Service]
@@ -10,8 +10,12 @@ Environment=LOG_DIR=/var/log/rtl_433/tpms
 Environment=LOG_FILE=/var/log/rtl_433/tpms/tpms_current.jsonl
 
 # -M time:iso:utc gives stable timestamps independent of local TZ.
-ExecStart=/bin/bash -lc 'mkdir -p "$LOG_DIR" && exec /usr/bin/rtl_433 -f 433.92M -M protocol -M level -F json -M time:iso >> "$LOG_FILE"'
-
+ExecStart=/bin/bash -lc '\
+  mkdir -p "$LOG_DIR" && \
+  exec /usr/bin/rtl_433 -f 433.92M -M protocol -M level -F json -M time:iso \
+  | tee -a "$LOG_FILE" \
+  | /usr/bin/python3 /opt/rtl433-prom-exporter.py \
+'
 Restart=always
 RestartSec=2
 

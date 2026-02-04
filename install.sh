@@ -5,10 +5,12 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 UNIT_SRC="$REPO_DIR/rtl433-tpms.service"
 LOGROTATE_SRC="$REPO_DIR/rtl433-tpms.logrotate"
+PROM_EXPORTER_SRC="$REPO_DIR/rtl433-prom-exporter.py"
 
 # System destinations
 UNIT_DST="/etc/systemd/system/rtl433-tpms.service"
 LOGROTATE_DST="/etc/logrotate.d/rtl433-tpms"
+PROM_EXPORTER_DST="/opt/rtl433-prom-exporter.py"
 
 SERVICE_NAME="rtl433-tpms.service"
 LOG_DIR="/var/log/rtl_433/tpms"
@@ -78,6 +80,9 @@ main() {
 
   echo "==> Installing systemd unit"
   install_if_changed "$UNIT_SRC" "$UNIT_DST" 0644
+
+  echo "==> Installing prometheus exporter"
+  install_if_changed "$PROM_EXPORTER_SRC" "$PROM_EXPORTER_DST" 0644
 
   echo "==> Installing logrotate config"
   install_if_changed "$LOGROTATE_SRC" "$LOGROTATE_DST" 0644

@@ -9,7 +9,7 @@ ls -1 /var/log/rtl_433/tpms | tail -n 10
 
 
 #+begin_src sh
-grep -E '^\s*\{.*\}\s*$' all.jsonl > cleaned.jsonl
+grep --text -E '^\s*\{.*\}\s*$' all.jsonl > cleaned.jsonl
 #+end_src
 
 
@@ -38,4 +38,15 @@ zcat -f /var/log/rtl_433/tpms/tpms_current.jsonl* \
   | sort \
   | uniq -c \
   | sort -nr
+#+end_src
+
+Test prometheus exporter
+#+begin_src sh
+curl -s http://127.0.0.1:9123/metrics | grep rtl433_temperature_c | head
+#+end_src
+
+#+begin_src sh
+python3 jsonl_to_openmetrics.py < /var/log/rtl_433/tpms/tpms_current.jsonl > backfill.om
+nix shell nixpkgs#prometheus.cli
+sudo -u prometheus promtool tsdb create-blocks-from openmetrics backfill.om /var/lib/prometheus2/data
 #+end_src
