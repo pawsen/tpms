@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light">
+  <title>LFHS Temperature</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --fg:#111111;
+      --muted:#555;
+      --grid:#e6e6e6;
+      --border:#c9c9c9;
+      --accent:#b00020;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    body{font-family:var(--sans); margin:16px; color:var(--fg); background:var(--bg);}
+    h1{margin:0 0 10px 0; font-size:34px; font-weight:700;}
+    #wrap{max-width:980px;}
+    canvas{
+      width:100%;
+      height:420px;
+      border:1px solid var(--border);
+      border-radius:8px;
+      display:block;
+      background:var(--bg);
+    }
+    .row{margin-top:10px; line-height:1.35;}
+    .controls a{margin-right:10px; cursor:pointer; text-decoration:underline; color:var(--fg);}
+    .controls a b{font-weight:700;}
+    .controls label{margin-left:12px; user-select:none;}
+    code{font-family:var(--mono);}
+    .small{color:var(--muted); font-size:13px;}
+    select{font-size:14px;}
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <h1>LFHS / temperature</h1>
+
+    <canvas id="graph"></canvas>
+
+    <div class="row">
+      Sensor:
+      <select id="sensor">
+        <option value='rtl433_temperature_c{model="Bresser-3CH",id="251",channel="1"}'>Bresser-3CH 251 ch1</option>
+        <option value='rtl433_temperature_c{model="Acurite-606TX",id="253",channel="2"}'>Acurite-606TX 253 ch2</option>
+      </select>
+    </div>
+
+    <div class="row">
+      Aggregation: <b><span id="scaletext">?</span></b>
+      &nbsp;&nbsp;Status: <b><span id="statustext">?</span></b>
+    </div>
+
+    <div class="row">
+      Range: <b><span id="rangetext">?</span></b>
+    </div>
+
+    <div class="row controls">
+      Change to:
+      <a data-range="1200"><b>20min</b></a>
+      <a data-range="3600"><b>hour</b></a>
+      <a data-range="86400"><b>day</b></a>
+      <a data-range="604800"><b>week</b></a>
+      <a data-range="2678400"><b>month</b></a>
+      <a data-range="31536000"><b>year</b></a>
+
+      <label><input id="fixbox" type="checkbox" /> Fix vertical scale</label>
+    </div>
+
+    <div class="row">
+      Last update: <code id="lastblip">?</code>
+    </div>
+
+    <script src="app.js"></script>
+  </div>
+</body>
+</html>
