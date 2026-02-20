@@ -1,3 +1,6 @@
 /.direnv/
 *.png
+!presentation/*.png
 *.jsonl
+*.om
+/urh/

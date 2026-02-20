@@ -1,0 +1,11 @@
+/* Force wrapping in all reveal code blocks */
+.reveal pre,
+.reveal pre code,
+.reveal pre code * {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+/* Prevent horizontal scrollbars winning */
+/* .reveal pre { overflow-x: hidden !important; } */

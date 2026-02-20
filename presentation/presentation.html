@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Generated on 2026-02-20 Fri 21:22 -->
+<meta charset="utf-8"/>
+<meta name="author" content="Paw Møller"/>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="file:///home/paw/.emacs.d/.local/straight/build-30.2/revealjs/dist/reveal.css"/>
+
+<link rel="stylesheet" href="file:///home/paw/.emacs.d/.local/straight/build-30.2/revealjs/dist/theme/black.css" id="theme"/>
+
+<link rel="stylesheet" href="./reveal-fit.css"/>
+
+<link rel="stylesheet" href="./reveal-wrap.css"/>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section>
+<section id="slide-org8ab105d">
+<h2 id="org8ab105d">TPMS</h2>
+
+<div id="org348b972" class="figure">
+<p><img src="TIRE-PRESSURE-SENSOR-IN-WHEEL.jpg" alt="TIRE-PRESSURE-SENSOR-IN-WHEEL.jpg" />
+</p>
+</div>
+
+<p>
+Lovpligtigt i nye biler siden 2014.
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orga361f8a">
+<h2 id="orga361f8a">Bølgelængde</h2>
+
+<div id="org0337d48" class="figure">
+<p><img src="wave.png" alt="wave.png" />
+</p>
+</div>
+
+<p>
+\(\lambda = \frac{299e6 \,m/s}{460e6 \,Hz}=0.65m\)
+</p>
+
+<p>
+dipol, ½&lambda;:
+\(\frac{0.65m}{2\cdot2} \cdot95\% = 15cm\)
+</p>
+</section>
+</section>
+<section>
+<section id="slide-org01a9ca3">
+<h2 id="org01a9ca3">sdrpp demo</h2>
+<p>
+460MHz
+</p>
+</section>
+</section>
+<section>
+<section id="slide-org46fe9c7">
+<h2 id="org46fe9c7">Skrotpladsen</h2>
+
+<div id="org95d58b9" class="figure">
+<p><img src="old-gut.jpg" alt="old-gut.jpg" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgb56856e">
+<h2 id="orgb56856e">Intermezzo</h2>
+<p>
+Ski-holder fra miljøpladsen
+<img src="cykel-toptur.jpg" alt="cykel-toptur.jpg" />
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orga48bc2a">
+<h2 id="orga48bc2a">433MHz heatmap</h2>
+
+<div id="org2448df4" class="figure">
+<p><img src="433_scan.png" alt="433_scan.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgba64833">
+<h2 id="orgba64833">Magnetisk -&gt; Elektrisk energi</h2>
+
+<div id="orgfea6916" class="figure">
+<p><img src="urh.png" alt="urh.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgc4a17b3">
+<h2 id="orgc4a17b3">Decode</h2>
+<div class="org-src-container">
+
+<pre class="src src-json">{<span style="color: #ff79c6;">"time"</span> : <span style="color: #f1fa8c;">"2026-02-19T22:05:37"</span>, <span style="color: #ff79c6;">"model"</span> : <span style="color: #f1fa8c;">"Toyota"</span>, <span style="color: #ff79c6;">"type"</span> : <span style="color: #f1fa8c;">"TPMS"</span>, <span style="color: #ff79c6;">"id"</span> : <span style="color: #f1fa8c;">"d9b796c4"</span>, <span style="color: #ff79c6;">"status"</span> : <span style="color: #8be9fd;">128</span>, <span style="color: #ff79c6;">"pressure_PSI"</span> : <span style="color: #8be9fd;">30.000</span>, <span style="color: #ff79c6;">"temperature_C"</span> : <span style="color: #8be9fd;">-2.000</span>, <span style="color: #ff79c6;">"mic"</span> : <span style="color: #f1fa8c;">"CRC"</span>, <span style="color: #ff79c6;">"mod"</span> : <span style="color: #f1fa8c;">"FSK"</span>, <span style="color: #ff79c6;">"freq1"</span> : <span style="color: #8be9fd;">433.930</span>, <span style="color: #ff79c6;">"freq2"</span> : <span style="color: #8be9fd;">433.887</span>, <span style="color: #ff79c6;">"rssi"</span> : <span style="color: #8be9fd;">-0.138</span>, <span style="color: #ff79c6;">"snr"</span> : <span style="color: #8be9fd;">22.512</span>, <span style="color: #ff79c6;">"noise"</span> : <span style="color: #8be9fd;">-22.650</span>}
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-org28483df">
+<h2 id="org28483df">Overvågning på parkeringspladsen</h2>
+
+<div id="orgcb73537" class="figure">
+<p><img src="antenne-parkering.jpg" alt="antenne-parkering.jpg" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-org3b6f654">
+<h2 id="org3b6f654">Tilbage på værelset</h2>
+
+<div id="orga17bf9b" class="figure">
+<p><img src="antenne-vindue.jpg" alt="antenne-vindue.jpg" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orga2e2730">
+<h2 id="orga2e2730">Optag alt</h2>
+<p>
+499 unikke ID
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-conf">  32356 Acurite-606TX   253     2
+  23750 Bresser-3CH     251     1
+  14868 Nexus-TH        164     1
+  12941 Toyota  d9b796c4
+  12839 Toyota  d9b79970
+  12815 Toyota  d9bd4f7c
+  12395 Toyota  d9b7401b
+   9481 Bresser-3CH     75      1
+   7777 Toyota  d37bb93f
+   7259 Acurite-606TX   253     1
+   5355 Cotech-367959   161
+   2849 Toyota  d45539f3
+   1773 Toyota  d34501f7
+    974 Toyota  d45524a7
+    868 Nexus-TH        75      1
+    514 Toyota  d34511b9
+    336 Toyota  d4552503
+    284 Toyota  d34501b3
+    271 Toyota  d33e1c81
+    256 KlikAanKlikUit-Switch   15627662
+    255 Proove-Security 15627662        1
+    255 Nexa-Security   15627662        1
+    244 Toyota  db536e08
+    238 Proove-Security 60085913        3
+    238 Nexa-Security   60085913        3
+    238 KlikAanKlikUit-Switch   60085913
+    211 Toyota  db536e87
+    202 Proove-Security 39104350        3
+    202 Nexa-Security   39104350        3
+    202 KlikAanKlikUit-Switch   39104350
+    201 Proove-Security 41313801        3
+    201 Nexa-Security   41313801        3
+    201 KlikAanKlikUit-Switch   41313801
+    199 Toyota  da1dc469
+    139 Ford    017e35a7
+    126 Nexus-TH        251     1
+    119 Renault da1e43
+    118 Toyota  d5fe88b5
+    118 Toyota  d455250f
+    118 Ford    017e3643
+    115 Ford    017e440b
+    103 Ford    017e35a0
+     88 Renault da1385
+     86 Toyota  da0a145d
+     81 Toyota  da4c5667
+     80 Toyota  db67c2c5
+     80 Toyota  d5f9fbe4
+     72 Toyota  db679e11
+     72 Citroen 817e35a7
+     71 Hyundai-VDO     93aba0ad
+     68 Hyundai-VDO     817e35a0
+
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">zcat -f tpms_current.jsonl* <span style="color: #f1fa8c;">\</span>
+        | jq -Rr <span style="color: #f1fa8c;">'fromjson? | select(.id? != null) | [(.model // "UNKNOWN"), (.id|tostring), (.channel)] | @tsv'</span> <span style="color: #f1fa8c;">\</span>
+        | sort <span style="color: #f1fa8c;">\</span>
+        | uniq -c <span style="color: #f1fa8c;">\</span>
+        | sort -nr
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgcc14065">
+<h2 id="orgcc14065">Hvad er temperaturen</h2>
+<p>
+<img src="lfhs-temp.png" alt="lfhs-temp.png" />
+<a href="https://smallbrain.bleak-mine.ts.net/lfhs">https://smallbrain.bleak-mine.ts.net/lfhs</a>
+</p>
+</section>
+</section>
+<section>
+<section id="slide-org4463948">
+<h2 id="org4463948">Hvad med bilen</h2>
+
+<div id="org6c41895" class="figure">
+<p><img src="bil-hjemme.png" alt="bil-hjemme.png" />
+</p>
+</div>
+
+<pre class="example">
+python tpms.py tpms_current.jsonl --id d9b79970 --id d9b7401b --id d9bd4f7c --id d9b796c4 --window-minutes 30 --show
+</pre>
+</section>
+</section>
+<section>
+<section id="slide-org563801f">
+<h2 id="org563801f">Dæktrykket</h2>
+
+<div id="org3239e0c" class="figure">
+<p><img src="tire-pressure.png" alt="tire-pressure.png" />
+</p>
+</div>
+
+<p>
+\(pV = nRT\)
+</p>
+
+<p>
+<a href="https://smallbrain.bleak-mine.ts.net/grafana/d/g6h5m4/toyota?orgId=1&amp;from=now-10d&amp;to=now&amp;timezone=browser">https://smallbrain.bleak-mine.ts.net/grafana/d/g6h5m4/toyota?orgId=1&amp;from=now-10d&amp;to=now&amp;timezone=browser</a>
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orgc4d2343">
+<h2 id="orgc4d2343">bilen</h2>
+
+<div id="org129206d" class="figure">
+<p><img src="toyota.jpg" alt="toyota.jpg" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-org3a62e18">
+<h2 id="org3a62e18">Bornhack</h2>
+
+<div id="org18e6a0d" class="figure">
+<p><img src="bornhack.jpg" alt="bornhack.jpg" />
+</p>
+</div>
+</section>
+</section>
+</div>
+</div>
+<script src="file:///home/paw/.emacs.d/.local/straight/build-30.2/revealjs/dist/reveal.js"></script>
+<script src="file:///home/paw/.emacs.d/.local/straight/build-30.2/revealjs/plugin/markdown/markdown.js"></script>
+<script src="file:///home/paw/.emacs.d/.local/straight/build-30.2/revealjs/plugin/notes/notes.js"></script>
+<script src="file:///home/paw/.emacs.d/.local/straight/build-30.2/revealjs/plugin/search/search.js"></script>
+<script src="file:///home/paw/.emacs.d/.local/straight/build-30.2/revealjs/plugin/zoom/zoom.js"></script>
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+controls: true,
+progress: true,
+history: false,
+center: true,
+slideNumber: 'c',
+rollingLinks: false,
+keyboard: true,
+mouseWheel: false,
+fragmentInURL: false,
+hashOneBasedIndex: false,
+pdfSeparateFragments: true,
+overview: true,
+
+transition: 'convex',
+transitionSpeed: 'default',
+
+// Plugins with reveal.js 4.x
+plugins: [ RevealMarkdown, RevealNotes, RevealSearch, RevealZoom ],
+
+// Optional libraries used to extend reveal.js
+dependencies: [
+]
+
+});
+</script>
+</body>
+</html>
